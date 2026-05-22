@@ -1,0 +1,41 @@
+# Internal planning / working docs (never publish)
+.planning/
+
+# Stray dropped images / screenshots not part of the repo
+WhatsApp Image*.jpeg
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Secrets / credentials (never commit)
+*.pem
+*.key
+*-credentials.json
+secrets.*
+
+# AWS / build artifacts
+*.zip
+.aws-sam/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Evidence working files (commit curated screenshots, not raw dumps)
+docs/exercises/**/raw/
