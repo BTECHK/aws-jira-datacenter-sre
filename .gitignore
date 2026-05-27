@@ -1,6 +1,11 @@
 # Internal planning / working docs (never publish)
 .planning/
 
+# Knowledge stack: code knowledge-graph index (regenerable, large) + external wiki sources.
+# Tracked instead: learnings.md, wiki/, .claude/skills/, CLAUDE.md, AGENTS.md.
+.gitnexus/
+raw/
+
 # Stray dropped images / screenshots not part of the repo
 WhatsApp Image*.jpeg
 
@@ -29,6 +34,7 @@ secrets.*
 
 # AWS / build artifacts
 *.zip
+*.deb
 .aws-sam/
 
 # OS / editor
