@@ -11,7 +11,7 @@ A hands-on lab that self-hosts a **legacy open-source toolchain — Redmine, XWi
 Many organizations that historically self-hosted open-source tools (often for compliance reasons) are consolidating onto a single managed Cloud suite. This project models that journey end to end:
 
 1. **Stand up** a self-hosted OSS toolchain on AWS Linux — issue tracking (Redmine), documentation (XWiki), and source control (Gitea), each on its own host, fronted by a reverse proxy with TLS, backed by managed PostgreSQL.
-2. **Operate** it — Linux patching, a major application upgrade across a Java version boundary with rollback, backup/restore, and enterprise identity (LDAP + SAML SSO).
+2. **Operate** it — Linux patching, two major application upgrades across runtime/framework version boundaries (Ruby/Rails and Java/JVM) with rollback, backup/restore, and enterprise identity (LDAP + SAML SSO).
 3. **Migrate** the toolchain to Atlassian Cloud — Redmine → Jira, XWiki → Confluence, Gitea → Bitbucket — and validate data parity.
 4. **Plan with AI** — an Amazon Bedrock knowledge base grounds a migration plan on best-practice checklists and the instance's own configuration, surfacing gaps before cutover.
 
@@ -54,8 +54,8 @@ This lab is sized for **functional demonstration, not load** (no real users or p
 
 | Phase | Focus |
 |-------|-------|
-| **1 — Foundation** | Provision the toolchain on AWS with Terraform + Ansible: 3 right-sized EC2 hosts, shared RDS, nginx + TLS, SSM access, CloudWatch, and realistic seeded data in each app. (XWiki installed at an older LTS so Phase 2 has a real upgrade.) |
-| **2 — Patch & Upgrade** | Linux patching (Ansible), backup/restore procedure, and a **major XWiki upgrade across a Java 17 → 21 boundary** on Tomcat, with a tested rollback. |
+| **1 — Foundation** | Provision the toolchain on AWS with Terraform + Ansible: 3 right-sized EC2 hosts, shared RDS, nginx + TLS, SSM access, CloudWatch, and realistic seeded data in each app. (Redmine and XWiki installed at older versions so Phase 2 has real upgrades.) |
+| **2 — Patch & Upgrade** | Linux patching (Ansible), backup/restore procedure, and **two major application upgrades, each with a tested rollback** — **Redmine 5.1 → 6.1** (Ruby/Rails boundary) and a **major XWiki LTS upgrade across Java 17 → 21** on Tomcat. |
 | **3 — AI-Assisted Migration** | Migrate the toolchain to Atlassian Cloud (Redmine→Jira via REST/CSV, XWiki→Confluence via export/ETL, Gitea→Bitbucket via git mirror) with parity validation; a Bedrock knowledge base drafts and refines the migration plan and flags pre-migration cleanup. |
 | **4 — Enterprise Auth** | LDAP user directory + SAML SSO via Keycloak. Optional: clustering / zero-downtime upgrade discussion. |
 
@@ -84,7 +84,7 @@ This lab is sized for **functional demonstration, not load** (no real users or p
 - **Consistent resource naming + tagging:** `mds-tools-<service>` names with `Project`/`Environment`/`Service`/`ManagedBy` tags across all resources — production-style and traceable.
 - **SSM Session Manager over SSH:** key-less, auditable host access with a smaller attack surface.
 - **AI for migration *planning*, not ticket triage:** a grounded knowledge base assists migration readiness — the genuinely useful place for AI in this workflow.
-- **Major application upgrade as the upgrade exercise:** the XWiki LTS jump across Java 17 → 21 on Tomcat exercises the full upgrade/rollback process; Redmine/Gitea run at recent stable.
+- **Major application upgrades as the upgrade exercise:** two reps on two stacks — the Redmine 5.1 → 6.1 jump (Ruby/Rails boundary) on the Jira analog backs the *upgrade-then-migrate* story, and the XWiki LTS jump across Java 17 → 21 on Tomcat exercises a JVM-boundary upgrade with the `setenv.sh`-wiped gotcha; Gitea runs at recent stable.
 
 ---
 
@@ -96,7 +96,7 @@ aws-jira-datacenter-sre/
 ├── docs/
 │   ├── runbooks/             # Operational procedures
 │   └── exercises/            # Evidence / screenshots per phase
-├── jiraops-cli/              # Python CLI for REST extraction + migration parity checks
+├── jiraops-cli/              # Python CLI: JCMA-style pre-migration assess/clean + REST extraction + parity checks
 ├── phases/
 │   ├── phase-1-foundation/   # terraform/ ansible/ seed/ scripts/
 │   ├── phase-2-upgrade/      # ansible/ backup/

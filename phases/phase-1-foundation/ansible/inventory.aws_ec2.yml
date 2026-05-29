@@ -1,0 +1,10 @@
+plugin: amazon.aws.aws_ec2
+regions: ["us-east-1"]
+filters: { "tag:Service": ["redmine","xwiki","gitea"] }
+hostnames: ["instance-id"]
+compose:
+  ansible_connection: "'community.aws.aws_ssm'"
+  ansible_aws_ssm_bucket_name: "'mds-tools-ssm-jira-migration'"
+  ansible_aws_ssm_region: "'us-east-1'"
+  service: tags.Service
+keyed_groups: [{ key: "tags.Service", prefix: "svc" }]

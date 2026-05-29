@@ -45,3 +45,10 @@ Thumbs.db
 
 # Evidence working files (commit curated screenshots, not raw dumps)
 docs/exercises/**/raw/
+
+# Local AI-tooling / skills state (not lab content)
+.agents/
+skills-lock.json
+
+# Scratch dumps (journalctl / shell history — large, and may contain secrets)
+random-ignore/

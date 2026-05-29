@@ -1,0 +1,132 @@
+# Clean-install Gitea on its own box (mds-tools-gitea), restoring the guide's
+# intended one-tool-per-box layout after Gitea was accidentally colocated on the
+# redmine box. This mirrors Phase-1 Step 4 as idempotent automation.
+#
+# RUN FROM: your laptop / WSL, in this directory (phases/phase-1-foundation/ansible/):
+#   ansible-playbook -i inventory.aws_ec2.yml gitea.yml \
+#     -e rds_host=$(terraform -chdir=../terraform output -raw rds_endpoint)
+#
+# The RDS password is read from Secrets Manager on the controller (your AWS creds) —
+# you never paste it. The shared RDS `gitea` DB already holds your schema + mdsadmin
+# (left intact by the teardown script), so Gitea comes up working and the admin step
+# is skipped. Only if you RESET that DB, also pass:  -e gitea_admin_pw='<password>'
+- name: Install Gitea on mds-tools-gitea (clean install, one-tool-per-box)
+  hosts: svc_gitea                       # keyed group from inventory: tags.Service=gitea
+  become: true
+  vars:
+    gitea_ver: "1.22.3"                  # match the Phase-1 guide and the schema already in RDS
+    gitea_bin: /usr/local/bin/gitea
+    rds_secret_id: "mds-tools/prod/rds-master"
+    rds_password: "{{ (lookup('amazon.aws.aws_secret', rds_secret_id, region='us-east-1') | from_json).password }}"
+  tasks:
+    - name: Require rds_host (pass -e rds_host=<endpoint>, e.g. from `terraform output -raw rds_endpoint`)
+      ansible.builtin.assert:
+        that: [ "rds_host is defined", "rds_host | length > 0" ]
+        fail_msg: "Missing rds_host. Re-run with: -e rds_host=$(terraform -chdir=../terraform output -raw rds_endpoint)"
+
+    - name: git (Gitea shells out to it for repo ops)
+      ansible.builtin.dnf: { name: git, state: present }
+
+    - name: gitea service user (system, nologin, home=/opt/gitea)
+      ansible.builtin.user:
+        name: gitea
+        system: true
+        create_home: true
+        home: /opt/gitea
+        shell: /sbin/nologin
+
+    - name: download the gitea binary
+      ansible.builtin.get_url:
+        url: "https://dl.gitea.com/gitea/{{ gitea_ver }}/gitea-{{ gitea_ver }}-linux-amd64"
+        dest: "{{ gitea_bin }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: data + config directories (gitea-owned)
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: gitea
+        group: gitea
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /var/lib/gitea,        mode: "0750" }
+        - { path: /var/lib/gitea/custom, mode: "0750" }
+        - { path: /var/lib/gitea/data,   mode: "0750" }
+        - { path: /var/lib/gitea/log,    mode: "0750" }
+        - { path: /etc/gitea,            mode: "0770" }
+
+    - name: app.ini (points at the shared RDS `gitea` DB)
+      ansible.builtin.copy:
+        dest: /etc/gitea/app.ini
+        owner: gitea
+        group: gitea
+        mode: "0640"          # holds the DB password
+        content: |
+          [server]
+          DOMAIN     = git.lab.local
+          ROOT_URL   = https://git.lab.local/
+          HTTP_ADDR  = 0.0.0.0
+          HTTP_PORT  = 3000
+          [database]
+          DB_TYPE  = postgres
+          HOST     = {{ rds_host }}:5432
+          NAME     = gitea
+          USER     = mdsmaster
+          PASSWD   = {{ rds_password }}
+          SSL_MODE = require
+          [security]
+          INSTALL_LOCK = true
+          [service]
+          DISABLE_REGISTRATION = false
+      no_log: true            # don't print the rendered password
+
+    - name: systemd unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/gitea.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Gitea
+          After=network.target
+          [Service]
+          Type=simple
+          User=gitea
+          WorkingDirectory=/var/lib/gitea
+          ExecStart={{ gitea_bin }} web --config /etc/gitea/app.ini
+          Environment=GITEA_WORK_DIR=/var/lib/gitea
+          LimitNOFILE=65535
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: enable + start gitea
+      ansible.builtin.systemd:
+        name: gitea
+        daemon_reload: true
+        enabled: true
+        state: started
+
+    - name: wait for gitea to listen on :3000
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3000
+        timeout: 60
+
+    - name: create admin user (only if the gitea DB was reset; otherwise the existing mdsadmin is reused)
+      ansible.builtin.command:
+        cmd: >
+          {{ gitea_bin }} admin user create --admin --username mdsadmin
+          --password '{{ gitea_admin_pw }}' --email admin@mds.local
+          --config /etc/gitea/app.ini --work-path /var/lib/gitea
+      become_user: gitea
+      register: gitea_admin
+      changed_when: "'created' in (gitea_admin.stdout | default(''))"
+      failed_when:
+        - gitea_admin.rc != 0
+        - "'already exists' not in ((gitea_admin.stderr | default('')) ~ (gitea_admin.stdout | default('')))"
+      when: gitea_admin_pw is defined and (gitea_admin_pw | length > 0)
+      no_log: true

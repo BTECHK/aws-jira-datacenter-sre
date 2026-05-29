@@ -1,0 +1,10 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: base packages
+      ansible.builtin.dnf:
+        # postgres client pkg name differs: AL2023 = postgresql15; Rocky/RHEL 9 AppStream = postgresql
+        name: "{{ ['tar', 'gzip', 'fontconfig', (ansible_distribution == 'Amazon') | ternary('postgresql15', 'postgresql')] }}"
+        state: present
+    - name: service user (home is the app dir)
+      ansible.builtin.user: { name: "{{ service }}", system: true, create_home: true, home: "/opt/{{ service }}" }
