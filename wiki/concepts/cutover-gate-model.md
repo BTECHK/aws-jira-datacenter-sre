@@ -30,4 +30,4 @@ The `assess`/`clean`/`parity` checks are implemented in [[jiraops-cli]]. `assess
 - **Non-destructive rollback** — the source is only *frozen* read-only, never changed, so rollback = lift the freeze and keep using Redmine. The RDS snapshot + `pg_dump` taken at T-1 are the floor if anything *was* touched.
 - **Rollback trigger is explicit** — parity delta over threshold, broadly-wrong attribution, or an unclearable blocking import error inside the window.
 
-Fits into the broader [[oss-to-atlassian-migration]] Phase 3.
+Fits into the broader [[oss-to-atlassian-migration]] Phase 4.

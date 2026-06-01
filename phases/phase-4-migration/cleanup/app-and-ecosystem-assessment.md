@@ -36,7 +36,7 @@ Marketplace apps have a direct analog here, and the same assess→classify→dec
 | Source | Plugin/extension surface | Where to inventory | Migration impact |
 |---|---|---|---|
 | **Redmine** | Ruby plugins under `plugins/`, schema migrations via `redmine:plugins:migrate` | `plugins/` dir; `Administration → Plugins` | A plugin that adds a tracker/field/workflow is **invisible to a plain CSV export** — its data must be mapped into Jira's native equivalent or dropped. A plugin incompatible with Rails 7.2 also **breaks the Phase-2 upgrade** `db:migrate` (migrate core first, add plugins back one at a time). |
-| **XWiki** | Extensions via Extension Manager (e.g. the **LDAP/OIDC authenticators** added in Phase 4) | `Administration → Extensions` | Macros/extensions are the **loss-ledger drivers** for the Confluence leg — XWiki macros have no Confluence equivalent; assess each, rebuild-or-drop. |
+| **XWiki** | Extensions via Extension Manager (e.g. the **LDAP/OIDC authenticators** added in Phase 5) | `Administration → Extensions` | Macros/extensions are the **loss-ledger drivers** for the Confluence leg — XWiki macros have no Confluence equivalent; assess each, rebuild-or-drop. |
 | **Gitea** | Minimal (no rich plugin ecosystem) | n/a | Mostly N/A — git history is portable; metadata (PRs/issues/webhooks) is the thing left behind, not "apps." |
 
 **The lab's honest answer:** the seeded instances are plugin-light by design, so the app/plugin assessment is mostly a **no-op on the data** — but the *discipline* (inventory, classify, decide, document) is what you'd carry into a real DC instance, and the Redmine-plugin-breaks-the-upgrade and XWiki-macro-loss-ledger cases are the live demonstrations.

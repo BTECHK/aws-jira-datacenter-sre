@@ -27,9 +27,10 @@ nginx (reverse proxy + TLS) fronts three application EC2s — Redmine/Puma, XWik
 - **Deliberately old app versions** (e.g. Redmine 5.1) — so Phase 2's upgrades are real cross-boundary jumps (Ruby/Rails; Java 17→21 on Tomcat) with tested rollback.
 - **Consistent naming + tagging** — `mds-tools-<service>` names with `Project`/`Environment`/`Service`/`ManagedBy` tags across all resources.
 
-## The four phases
+## The five phases
 
 1. **Foundation** — Terraform + Ansible provision the toolchain (3 app EC2s, shared RDS, nginx+TLS, SSM, CloudWatch, seeded data). See [[redmine]].
 2. **Patch & Upgrade** — Linux patching + two major app upgrades with rollback.
-3. **AI-Assisted Migration** — migrate to Cloud (Redmine→Jira REST/CSV, XWiki→Confluence XAR/REST, Gitea→Bitbucket git mirror) with parity validation via [[jiraops-cli]]; Bedrock drafts/refines the plan. Go-live per [[cutover-runbook]] and [[cutover-gate-model]].
-4. **Enterprise Auth** — LDAP + SAML SSO via Keycloak.
+3. **High Availability** — cluster Redmine (2 nodes + HAProxy + EFS shared home + RDS Multi-AZ) with failover + rolling-upgrade drills; the legacy HA topology the migration later retires.
+4. **AI-Assisted Migration** — migrate to Cloud (Redmine→Jira REST/CSV, XWiki→Confluence XAR/REST, Gitea→Bitbucket git mirror) with parity validation via [[jiraops-cli]]; Bedrock drafts/refines the plan. Go-live per [[cutover-runbook]] and [[cutover-gate-model]].
+5. **Enterprise Auth** — LDAP + SAML SSO via Keycloak.

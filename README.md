@@ -56,8 +56,9 @@ This lab is sized for **functional demonstration, not load** (no real users or p
 |-------|-------|
 | **1 — Foundation** | Provision the toolchain on AWS with Terraform + Ansible: 3 right-sized EC2 hosts, shared RDS, nginx + TLS, SSM access, CloudWatch, and realistic seeded data in each app. (Redmine and XWiki installed at older versions so Phase 2 has real upgrades.) |
 | **2 — Patch & Upgrade** | Linux patching (Ansible), backup/restore procedure, and **two major application upgrades, each with a tested rollback** — **Redmine 5.1 → 6.1** (Ruby/Rails boundary) and a **major XWiki LTS upgrade across Java 17 → 21** on Tomcat. |
-| **3 — AI-Assisted Migration** | Migrate the toolchain to Atlassian Cloud (Redmine→Jira via REST/CSV, XWiki→Confluence via export/ETL, Gitea→Bitbucket via git mirror) with parity validation; a Bedrock knowledge base drafts and refines the migration plan and flags pre-migration cleanup. |
-| **4 — Enterprise Auth** | LDAP user directory + SAML SSO via Keycloak. Optional: clustering / zero-downtime upgrade discussion. |
+| **3 — High Availability** | Cluster Redmine (the Jira analog) as **2 nodes behind HAProxy** with sticky sessions + health-checked failover, a **shared EFS home**, and **RDS Multi-AZ** — the legacy HA topology operated *before* migrating. Proven failover + rolling-upgrade drills. |
+| **4 — AI-Assisted Migration** | Migrate the toolchain to Atlassian Cloud (Redmine→Jira via REST/CSV, XWiki→Confluence via export/ETL, Gitea→Bitbucket via git mirror) with parity validation; a Bedrock knowledge base drafts and refines the migration plan and flags pre-migration cleanup. Migrating *retires* the Phase-3 HA cluster (HA/DR becomes Atlassian-managed). |
+| **5 — Enterprise Auth** | LDAP user directory + SAML SSO via Keycloak. |
 
 ---
 
@@ -100,8 +101,9 @@ aws-jira-datacenter-sre/
 ├── phases/
 │   ├── phase-1-foundation/   # terraform/ ansible/ seed/ scripts/
 │   ├── phase-2-upgrade/      # ansible/ backup/
-│   ├── phase-3-migration/    # redmine-jira/ xwiki-confluence/ gitea-bitbucket/ ai/ validation/
-│   └── phase-4-auth/         # keycloak/ ldap/
+│   ├── phase-3-ha/           # ansible/ (EFS-mount + HAProxy) terraform/ breaks/ scripts/
+│   ├── phase-4-migration/    # redmine-jira/ xwiki-confluence/ gitea-bitbucket/ ai/ validation/
+│   └── phase-5-auth/         # keycloak/ ldap/
 ├── .gitignore
 └── README.md
 ```
@@ -111,15 +113,15 @@ aws-jira-datacenter-sre/
 ## Getting Started
 
 **Prerequisites:**
-- An AWS account (the lab runs roughly $8–12 total at minimum-viable sizing for a short project; **stop instances between sessions**).
+- An AWS account (the lab runs roughly $8–12 total at minimum-viable sizing for a short project; **stop instances between sessions**. The Phase-3 HA additions — 2nd node + EFS + RDS Multi-AZ — add a little while up; tear them down after the drills).
 - Free Atlassian **Cloud** sites (Jira / Confluence / Bitbucket) as migration destinations.
 - Local tooling: Terraform, Ansible, AWS CLI, Docker, Python 3, git.
 
 **High-level steps:**
 1. Provision the infrastructure (Phase 1) with Terraform; configure the hosts with Ansible.
 2. Install the OSS toolchain, wire the reverse proxy + TLS, and seed realistic data.
-3. Work through patching/upgrade (Phase 2), then the migration to Cloud (Phase 3).
-4. Add LDAP + SSO (Phase 4).
+3. Work through patching/upgrade (Phase 2), then cluster Redmine for HA (Phase 3), then the migration to Cloud (Phase 4).
+4. Add LDAP + SSO (Phase 5).
 5. Tear down (or stop) resources when done.
 
 Each phase folder holds the infrastructure and configuration for that stage. Operational procedures live in `docs/runbooks/`.
@@ -128,7 +130,7 @@ Each phase folder holds the infrastructure and configuration for that stage. Ope
 
 ## Cost
 
-At minimum-viable sizing: roughly **$8–12 total** for a short (7–10 day) project when stopping instances between sessions (~$25–30 if left running 24×7). Atlassian Cloud Free destinations are $0. Stop instances between sessions and tear down at the end to stay well within a small budget.
+At minimum-viable sizing: roughly **$8–12 total** for a short (7–10 day) project when stopping instances between sessions (~$25–30 if left running 24×7). Atlassian Cloud Free destinations are $0. Stop instances between sessions and tear down at the end to stay well within a small budget. **The Phase 3 (HA) additions** — a 2nd Redmine `t3.small`, an EFS filesystem, and **RDS Multi-AZ** (≈doubles the RDS portion while on) — raise this incrementally only while they're up; they're meant to be torn down after the failover/rolling-upgrade drills.
 
 ---
 
