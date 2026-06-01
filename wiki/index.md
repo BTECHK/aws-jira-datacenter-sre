@@ -10,7 +10,7 @@ When this file exceeds ~300 lines or the wiki passes ~150 pages, shard into `wik
 
 ## Sources
 
-- [[readme]] — project README: self-host OSS toolchain on AWS, migrate to Atlassian Cloud, AI-assisted planning; 4 phases + topology.
+- [[readme]] — project README: self-host OSS toolchain on AWS, migrate to Atlassian Cloud, AI-assisted planning; 5 phases + topology.
 - [[phase-1-redmine-debrief]] — field report on standing up Redmine 5.1; ~10 hidden-coupling failures and their root causes.
 - [[cutover-runbook]] — Redmine→Jira Cloud go-live runbook: gates, go/no-go scorecard, non-destructive rollback.
 

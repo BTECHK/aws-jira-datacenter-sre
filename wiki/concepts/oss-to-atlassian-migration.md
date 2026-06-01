@@ -20,7 +20,7 @@ nginx (reverse proxy + TLS) fronts three application EC2s — Redmine/Puma, XWik
 ## Architecture decisions and their rationale
 
 - **One EC2 per application** — production-like isolation of scaling, patching, and upgrade blast-radius. Right-sized per workload (XWiki's JVM is the heavy one).
-- **Shared RDS PostgreSQL, separate databases** — one managed data tier; one instance, three isolated DBs. A cost/isolation trade-off appropriate for a lab; HA/DR path (Multi-AZ + snapshots/PITR) is documented but not built.
+- **Shared RDS PostgreSQL, separate databases** — one managed data tier; one instance, three isolated DBs. A cost/isolation trade-off appropriate for a lab; the HA/DR path is **built in Phase 3** (RDS Multi-AZ), with the snapshot/PITR recovery story documented.
 - **Minimum-viable sizing** — smallest practical instances; the lab demonstrates function, not load (~$8–12 total when stopping instances between sessions).
 - **SSM Session Manager over SSH** — key-less, auditable host access with a smaller attack surface.
 - **AI for migration *planning*, not ticket triage** — a Bedrock knowledge base grounds migration-readiness on best-practice checklists + the instance's own config. The genuinely useful place for AI here.
