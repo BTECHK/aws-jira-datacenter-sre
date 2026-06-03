@@ -52,3 +52,13 @@ skills-lock.json
 
 # Scratch dumps (journalctl / shell history — large, and may contain secrets)
 random-ignore/
+
+# --- Local agent tooling & knowledge base — kept local, not part of this portfolio repo ---
+.agents/
+.claude/skills/
+.gitnexus/
+skills-lock.json
+AGENTS.md
+learnings.md
+wiki/
+raw/
