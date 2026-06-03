@@ -59,6 +59,7 @@ This lab is sized for **functional demonstration, not load** (no real users or p
 | **3 — High Availability** | Cluster Redmine (the Jira analog) as **2 nodes behind HAProxy** with sticky sessions + health-checked failover, a **shared EFS home**, and **RDS Multi-AZ** — the legacy HA topology operated *before* migrating. Proven failover + rolling-upgrade drills. |
 | **4 — AI-Assisted Migration** | Migrate the toolchain to Atlassian Cloud (Redmine→Jira via REST/CSV, XWiki→Confluence via export/ETL, Gitea→Bitbucket via git mirror) with parity validation; a Bedrock knowledge base drafts and refines the migration plan and flags pre-migration cleanup. Migrating *retires* the Phase-3 HA cluster (HA/DR becomes Atlassian-managed). |
 | **5 — Enterprise Auth** | LDAP user directory + SAML SSO via Keycloak. |
+| **6 — Day-2 ChatOps** *(optional)* | Post-migration governance operated from Slack: notify on Jira activity, **close tickets from Slack** (modal → write-back of closure date / evidence / attachment to Jira), SLA escalation, scheduled access-review + control-hygiene checks, and a posture dashboard + audit log. A fenced, separable capstone targeting the migrated Jira Cloud. |
 
 ---
 
@@ -103,7 +104,8 @@ aws-jira-datacenter-sre/
 │   ├── phase-2-upgrade/      # ansible/ backup/
 │   ├── phase-3-ha/           # ansible/ (EFS-mount + HAProxy) terraform/ breaks/ scripts/
 │   ├── phase-4-migration/    # redmine-jira/ xwiki-confluence/ gitea-bitbucket/ ai/ validation/
-│   └── phase-5-auth/         # keycloak/ ldap/
+│   ├── phase-5-auth/         # keycloak/ ldap/
+│   └── phase-6-chatops/      # (optional) slack-app/ detection/ dashboard/ terraform/ breaks/
 ├── .gitignore
 └── README.md
 ```
